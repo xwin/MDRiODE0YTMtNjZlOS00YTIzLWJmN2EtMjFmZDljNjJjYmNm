@@ -1,17 +1,32 @@
 from local_code.stage_2_code.Dataset_Loader import Dataset_Loader
-from local_code.stage_2_code.Method_MLP import Method_MLP
+from local_code.stage_2_code.Method_MLP import (
+    Method_MLP, 
+    Method_MLP_Single_Layer, 
+    Method_MLP_Dual_Layer, 
+    Method_MLP_No_Activation
+)
 from local_code.stage_2_code.Result_Saver import Result_Saver
 from local_code.stage_2_code.History_Saver import History_Saver
 from local_code.stage_2_code.Setting_Train_Test_PreSplit import Setting_Train_Test_PreSplit
-from local_code.stage_2_code.Evaluate_Accuracy import Evaluate_Accuracy
+from local_code.stage_2_code.Evaluate_Accuracy import (
+    Evaluate_Accuracy,
+    Evaluate_Precision,
+    Evaluate_Recall,
+    Evaluate_F1,
+    Evaluate_All
+)
 import numpy as np
 import torch
 
 #---- Multi-Layer Perceptron script ----
 if 1:
+
+    # study can be None, single_layer, dual_layer, no_activation
+    study = None
     #---- parameter section -------------------------------
     np.random.seed(2)
     torch.manual_seed(2)
+    torch.set_num_threads(16)
     #------------------------------------------------------
 
     # ---- objection initialization setction ---------------
@@ -27,16 +42,28 @@ if 1:
     history_obj.history_destination_folder_path = '../../result/stage_2_result/'
     history_obj.history_destination_file_name = 'train_history_mlp.csv'
 
-    method_obj = Method_MLP('multi-layer perceptron', '')
+    if study == 'single_layer':
+        method_obj = Method_MLP_Single_Layer('single-layer perceptron', '')
+    elif study == 'dual_layer':
+        method_obj = Method_MLP_Dual_Layer('dual-layer perceptron', '')
+    elif study == 'no_activation':
+        method_obj = Method_MLP_No_Activation('no activation', '')
+    else:
+        print('No studies, running multi-layer perceptron.')
+        method_obj = Method_MLP('multi-layer perceptron', '')
     method_obj.history = history_obj
+    method_obj.optimizer_name = 'Adam'
+    # we need to increase learning rate for SGD optimier
+    if method_obj.optimizer_name == 'SGD':
+        method_obj.learning_rate = 1e-2
 
     result_obj = Result_Saver('saver', '')
     result_obj.result_destination_folder_path = '../../result/stage_2_result/MLP_'
     result_obj.result_destination_file_name = 'prediction_result'
-
+    result_obj.fold_count = "1"
     setting_obj = Setting_Train_Test_PreSplit('train test pre split', '')
 
-    evaluate_obj = Evaluate_Accuracy('accuracy', '')
+    evaluate_obj = Evaluate_All('All metrics', '')
     # ------------------------------------------------------
 
     # ---- running section ---------------------------------

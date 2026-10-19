@@ -18,6 +18,8 @@ class Method_MLP(method, nn.Module):
     max_epoch = 300
     # it defines the learning rate for gradient descent based optimizer for model learning
     learning_rate = 1e-3
+    # default optimizer: 'Adam', 'SGD', 'RMSprop'
+    optimizer_name = 'Adam'
 
     # it defines the the MLP model architecture, e.g.,
     # how many layers, size of variables in each layer, activation function, etc.
@@ -52,8 +54,18 @@ class Method_MLP(method, nn.Module):
     # so we don't need to define the error backpropagation function here
 
     def train(self, X, y):
+
+        opt_name = self.optimizer_name.lower()
         # check here for the torch.optim doc: https://pytorch.org/docs/stable/optim.html
-        optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+
+        if opt_name == 'adam':
+            optimizer = torch.optim.Adam(self.parameters(), lr=self.learning_rate)
+        elif opt_name == 'sgd':
+            optimizer = torch.optim.SGD(self.parameters(), lr=self.learning_rate)
+        elif opt_name == 'rmsprop':
+            optimizer = torch.optim.RMSprop(self.parameters(), lr=self.learning_rate)
+        else:
+            raise ValueError('Optimizer not found')
         # check here for the nn.CrossEntropyLoss doc: https://pytorch.org/docs/stable/generated/torch.nn.CrossEntropyLoss.html
         loss_function = nn.CrossEntropyLoss()
         # for training accuracy investigation purpose
@@ -87,7 +99,7 @@ class Method_MLP(method, nn.Module):
                 loss_val = train_loss.item()
 
                 if self.history:
-                    self.history.record(epoch=epoch, loss=loss_val, accuracy=acc)
+                    self.history.record(Epoch=epoch, Loss=loss_val, Accuracy=acc)
 
                 if epoch % 50 == 0 or epoch == self.max_epoch - 1:
                     print('Epoch:', epoch, 'Accuracy:', acc, 'Loss:', loss_val)
@@ -109,4 +121,53 @@ class Method_MLP(method, nn.Module):
         print('--start testing...')
         pred_y = self.test(self.data['test']['X'])
         return {'pred_y': pred_y, 'true_y': self.data['test']['y']}
-            
+
+
+class Method_MLP_Single_Layer(Method_MLP):
+    """
+    Ablation model: MLP with a single fully connected layer (784 -> 10).
+    Inherits training, evaluation, and optimizer configuration from Method_MLP.
+    """
+    def __init__(self, mName, mDescription):
+        method.__init__(self, mName, mDescription)
+        nn.Module.__init__(self)
+        self.fc_layer = nn.Linear(784, 10)
+
+    def forward(self, x):
+        '''Forward propagation through the single linear layer'''
+        return self.fc_layer(x)
+
+
+class Method_MLP_Dual_Layer(Method_MLP):
+    """
+    Ablation model: MLP with two fully connected layers (784 -> hidden_dim -> 10) and ReLU activation.
+    Inherits training, evaluation, and optimizer configuration from Method_MLP.
+    """
+    def __init__(self, mName, mDescription, hidden_dim=256):
+        method.__init__(self, mName, mDescription)
+        nn.Module.__init__(self)
+        self.fc_layer_1 = nn.Linear(784, hidden_dim)
+        self.activation_func_1 = nn.ReLU()
+        self.fc_layer_2 = nn.Linear(hidden_dim, 10)
+
+    def forward(self, x):
+        '''Forward propagation through the dual layers'''
+        h1 = self.activation_func_1(self.fc_layer_1(x))
+        y_pred = self.fc_layer_2(h1)
+        return y_pred
+
+
+class Method_MLP_No_Activation(Method_MLP):
+    """
+    Ablation model: 3-layer MLP without activation functions (pure linear transformations).
+    Demonstrates that without non-linearities, deep networks collapse into a linear model.
+    """
+    def __init__(self, mName, mDescription):
+        super().__init__(mName, mDescription)
+
+    def forward(self, x):
+        '''Forward propagation without activation functions'''
+        h1 = self.fc_layer_1(x)
+        h2 = self.fc_layer_2(h1)
+        y_pred = self.fc_layer_3(h2)
+        return y_pred

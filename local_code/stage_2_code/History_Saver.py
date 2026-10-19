@@ -2,9 +2,6 @@
 Concrete HistoryModule class for saving training metrics to CSV
 '''
 
-# Copyright (c) 2017-Current Jiawei Zhang <jiawei@ifmlab.org>
-# License: TBD
-
 import csv
 import os
 from local_code.base_class.history import history
