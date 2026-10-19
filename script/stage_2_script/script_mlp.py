@@ -23,6 +23,11 @@ if 1:
 
     # study can be None, single_layer, dual_layer, no_activation
     study = None
+    # possible names: accuracy, precision, recall, f1, all
+    evaluator_type = 'all'
+    # possible names: Adam, SGD, RMSprop
+    optimizer_type = 'Adam'
+
     #---- parameter section -------------------------------
     np.random.seed(2)
     torch.manual_seed(2)
@@ -52,7 +57,7 @@ if 1:
         print('No studies, running multi-layer perceptron.')
         method_obj = Method_MLP('multi-layer perceptron', '')
     method_obj.history = history_obj
-    method_obj.optimizer_name = 'Adam'
+    method_obj.optimizer_name = optimizer_type
     # we need to increase learning rate for SGD optimier
     if method_obj.optimizer_name == 'SGD':
         method_obj.learning_rate = 1e-2
@@ -63,7 +68,17 @@ if 1:
     result_obj.fold_count = "1"
     setting_obj = Setting_Train_Test_PreSplit('train test pre split', '')
 
-    evaluate_obj = Evaluate_All('All metrics', '')
+
+    if evaluator_type == 'accuracy':
+        evaluate_obj = Evaluate_Accuracy('accuracy', '')
+    elif evaluator_type == 'precision':
+        evaluate_obj = Evaluate_Precision('precision', '')
+    elif evaluator_type == 'recall':
+        evaluate_obj = Evaluate_Recall('recall', '')
+    elif evaluator_type == 'f1':
+        evaluate_obj = Evaluate_F1('f1', '')
+    else:
+        evaluate_obj = Evaluate_All('All metrics', '')
     # ------------------------------------------------------
 
     # ---- running section ---------------------------------

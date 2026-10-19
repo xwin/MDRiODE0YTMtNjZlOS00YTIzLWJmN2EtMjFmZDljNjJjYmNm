@@ -94,7 +94,7 @@ class Method_MLP(method, nn.Module):
             optimizer.step()
 
             if epoch % 10 == 0 or epoch == self.max_epoch - 1:
-                accuracy_evaluator.data = {'true_y': y_true, 'pred_y': y_pred.max(1)[1]}
+                accuracy_evaluator.data = {'true_y': y, 'pred_y': y_pred.max(1)[1].detach().numpy()}
                 acc = accuracy_evaluator.evaluate()
                 loss_val = train_loss.item()
 
