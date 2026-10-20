@@ -32,6 +32,9 @@ class Setting_Train_Test_PreSplit(setting):
     def load_run_save_evaluate(self):
         # load datasets
         loaded_train_data = self.train_dataset.load()
+        # transfer mean and std to test dataset
+        self.test_dataset.mean = self.train_dataset.mean
+        self.test_dataset.std = self.train_dataset.std
         loaded_test_data = self.test_dataset.load()
 
         X_train, y_train = loaded_train_data['X'], loaded_train_data['y']

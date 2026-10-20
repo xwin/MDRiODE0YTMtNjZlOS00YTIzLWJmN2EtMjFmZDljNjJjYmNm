@@ -27,12 +27,16 @@ class Method_MLP(method, nn.Module):
     def __init__(self, mName, mDescription):
         method.__init__(self, mName, mDescription)
         nn.Module.__init__(self)
+        hidden_dim = 512
         # check here for nn.Linear doc: https://pytorch.org/docs/stable/generated/torch.nn.Linear.html
-        self.fc_layer_1 = nn.Linear(784, 256)
+        self.fc_layer_1 = nn.Linear(784, hidden_dim)
         # check here for nn.ReLU doc: https://pytorch.org/docs/stable/generated/torch.nn.ReLU.html
         self.activation_func_1 = nn.ReLU()
-        self.fc_layer_2 = nn.Linear(256, 64)
+        # check here for nn.Dropout doc: https://docs.pytorch.org/docs/2.14/generated/torch.nn.Dropout.html
+        self.dropout_1 = nn.Dropout(0.2)
+        self.fc_layer_2 = nn.Linear(hidden_dim, 64)
         self.activation_func_2 = nn.ReLU()
+        self.dropout_2 = nn.Dropout(0.2)
         self.fc_layer_3 = nn.Linear(64, 10)
         # because we use CrossEntropyLoss, we should not use the softmax layer
 
@@ -43,7 +47,9 @@ class Method_MLP(method, nn.Module):
         '''Forward propagation'''
         # hidden layer embeddings
         h1 = self.activation_func_1(self.fc_layer_1(x))
+        h1 = self.dropout_1(h1)
         h2 = self.activation_func_2(self.fc_layer_2(h1))
+        h2 = self.dropout_2(h2)
         # outout layer result
         # self.fc_layer_3(h2) will be a nx10 tensor
         # n (denotes the input instance number): 0th dimension; 10 (denotes the class number): 1st dimension
@@ -54,7 +60,7 @@ class Method_MLP(method, nn.Module):
     # so we don't need to define the error backpropagation function here
 
     def train(self, X, y):
-
+        nn.Module.train(self, True)
         opt_name = self.optimizer_name.lower()
         # check here for the torch.optim doc: https://pytorch.org/docs/stable/optim.html
 
@@ -108,6 +114,7 @@ class Method_MLP(method, nn.Module):
             self.history.save()
     
     def test(self, X):
+        nn.Module.train(self, False)
         # do the testing, and result the result
         y_pred = self.forward(torch.FloatTensor(X))
         # logits, which are the raw output of the neural network before the softmax layer
