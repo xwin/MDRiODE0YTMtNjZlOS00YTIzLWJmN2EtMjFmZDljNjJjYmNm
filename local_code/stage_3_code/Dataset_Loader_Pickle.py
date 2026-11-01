@@ -10,7 +10,21 @@ import numpy as np
 import os
 import pickle
 import torch
-from torch.utils.data import TensorDataset
+from torch.utils.data import Dataset,TensorDataset
+from torchvision.transforms import v2
+
+class AugmentedDataset(Dataset):
+    def __init__(self, base, transform):
+        self.base = base
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.base)
+
+    def __getitem__(self, i):
+        x, y = self.base[i]
+        return self.transform(x), y
+
 
 class Dataset_Loader_Pickle(dataset):
     data = None
@@ -26,9 +40,18 @@ class Dataset_Loader_Pickle(dataset):
     num_channels = None
     num_classes = None
     image_size = None  # (H, W)
+    # if True, the returned train set applies random transforms on the fly
+    augment = False
+    augment_transform = None   # None -> default below
 
     def __init__(self, dName=None, dDescription=None):
         super().__init__(dName, dDescription)
+
+    def _default_transform(self):
+        return v2.Compose([
+            v2.RandomAffine(degrees=10, translate=(0.05, 0.05), scale=(0.95, 1.05)),
+            v2.RandomHorizontalFlip(),
+        ])
 
     def _to_images(self, samples):
         '''list of samples -> float tensor (N, C, H, W) scaled to [0, 1]'''
@@ -75,4 +98,7 @@ class Dataset_Loader_Pickle(dataset):
         self.num_classes = int(max(train_y.max(), test_y.max())) + 1
         print(f'channels: {self.num_channels}, image size: {self.image_size}, classes: {self.num_classes}')
 
-        return TensorDataset(train_x, train_y), TensorDataset(test_x, test_y)
+        train_ds = TensorDataset(train_x, train_y)
+        if self.augment:
+            train_ds = AugmentedDataset(train_ds, self.augment_transform or self._default_transform())
+        return train_ds, TensorDataset(test_x, test_y)
