@@ -1,5 +1,8 @@
 from local_code.stage_3_code.Dataset_Loader_Pickle import Dataset_Loader_Pickle
-from local_code.stage_3_code.Method_CNN_CIFAR import Method_CNN_CIFAR
+from local_code.stage_3_code.Method_CNN_CIFAR import (
+    Method_CNN_CIFAR, 
+    Method_CNN_CIFAR_Kernel5
+    )
 from local_code.stage_3_code.Result_Saver import Result_Saver
 from local_code.stage_3_code.History_Saver import History_Saver
 from local_code.stage_3_code.Setting_Train_Test_PreSplit import Setting_Train_Test_PreSplit
@@ -17,12 +20,14 @@ from torchvision.transforms import v2
 #---- ORL model training and evaluation script ----
 if 1:
 
-    # study can be None, single_layer, dual_layer, no_activation
-    study = None
+    # study can be None, kernel5
+    study = 'kernel5'
     # possible names: accuracy, precision, recall, f1, all
     evaluator_type = 'all'
     # possible names: Adam, SGD, RMSprop
     optimizer_type = 'Adam'
+    # possible names: cross_entropy, label_smoothing, multi_margin
+    loss_type = 'cross_entropy'
 
     #---- parameter section -------------------------------
     np.random.seed(2)
@@ -55,15 +60,24 @@ if 1:
     history_obj.history_destination_folder_path = '../../result/stage_3_result/'
     history_obj.history_destination_file_name = 'train_history_cifar.csv'
 
-
-    method_obj = Method_CNN_CIFAR('CNN', 'cifar model')
+    if study == 'kernel5':
+        method_obj = Method_CNN_CIFAR_Kernel5('CNN_Kernel5', 'cifar model kernel 5')
+    else:
+        method_obj = Method_CNN_CIFAR('CNN', 'cifar model')
 
     method_obj.history = history_obj
     method_obj.optimizer_name = optimizer_type
     # we need to increase learning rate for SGD optimier
     if method_obj.optimizer_name == 'SGD':
         method_obj.learning_rate = 1e-2
-    #method_obj.max_epoch = 1
+
+    if loss_type == 'label_smoothing':
+        method_obj.loss_name = 'label_smoothing'
+    elif loss_type == 'multi_margin':
+        method_obj.loss_name = 'multi_margin'
+    # cross_entropy is the default loss
+    # for syntax check
+    # method_obj.max_epoch = 1
 
     result_obj = Result_Saver('saver', '')
     result_obj.result_destination_folder_path = '../../result/stage_3_result/CIFAR_'

@@ -20,6 +20,8 @@ class Method_CNN_Base(method, nn.Module):
     learning_rate = 1e-3
     # 'Adam', 'SGD', 'RMSprop'
     optimizer_name = 'Adam'
+    # 'cross_entropy', 'label_smoothing', 'multi_margin'
+    loss_name = 'cross_entropy'
 
     def __init__(self, mName, mDescription):
         # both parents are initialised explicitly; nn.Module must be initialised
@@ -40,10 +42,20 @@ class Method_CNN_Base(method, nn.Module):
             return torch.optim.RMSprop(self.parameters(), lr=self.learning_rate)
         raise ValueError('Optimizer not found')
 
+    def _build_loss(self):
+        name = self.loss_name.lower()
+        if name == 'cross_entropy':
+            return nn.CrossEntropyLoss()
+        elif name == 'label_smoothing':
+            return nn.CrossEntropyLoss(label_smoothing=0.1)
+        elif name == 'multi_margin':
+            return nn.MultiMarginLoss()
+        raise ValueError('Loss not found')
+
     def fit(self, train_dataset):
         nn.Module.train(self, True)
         optimizer = self._build_optimizer()
-        loss_function = nn.CrossEntropyLoss()
+        loss_function = self._build_loss()
         accuracy_evaluator = Evaluate_Accuracy('training evaluator', '')
         loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True)
 
