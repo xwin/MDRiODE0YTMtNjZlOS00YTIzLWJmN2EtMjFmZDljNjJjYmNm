@@ -17,11 +17,11 @@ import numpy as np
 import torch
 from torchvision.transforms import v2
 
-#---- ORL model training and evaluation script ----
+#---- CIFAR model training and evaluation script ----
 if 1:
 
     # study can be None, kernel5
-    study = 'kernel5'
+    study = None
     # possible names: accuracy, precision, recall, f1, all
     evaluator_type = 'all'
     # possible names: Adam, SGD, RMSprop
@@ -76,8 +76,10 @@ if 1:
     elif loss_type == 'multi_margin':
         method_obj.loss_name = 'multi_margin'
     # cross_entropy is the default loss
+
+    print(f"selecting {method_obj.loss_name} loss function")
     # for syntax check
-    # method_obj.max_epoch = 1
+    method_obj.max_epoch = 1
 
     result_obj = Result_Saver('saver', '')
     result_obj.result_destination_folder_path = '../../result/stage_3_result/CIFAR_'

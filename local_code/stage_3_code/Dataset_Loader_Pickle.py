@@ -13,18 +13,16 @@ import torch
 from torch.utils.data import Dataset,TensorDataset
 from torchvision.transforms import v2
 
-class AugmentedDataset(Dataset):
-    def __init__(self, base, transform):
-        self.base = base
+class AugmentedDataset(TensorDataset):
+    '''TensorDataset that applies a random transform to the image on every access.
+    .tensors holds the original, unaugmented data.'''
+    def __init__(self, *tensors, transform):
+        super().__init__(*tensors)
         self.transform = transform
 
-    def __len__(self):
-        return len(self.base)
-
     def __getitem__(self, i):
-        x, y = self.base[i]
+        x, y = super().__getitem__(i)
         return self.transform(x), y
-
 
 class Dataset_Loader_Pickle(dataset):
     data = None
@@ -96,9 +94,11 @@ class Dataset_Loader_Pickle(dataset):
         self.num_channels = train_x.shape[1]
         self.image_size = tuple(train_x.shape[2:])
         self.num_classes = int(max(train_y.max(), test_y.max())) + 1
-        print(f'channels: {self.num_channels}, image size: {self.image_size}, classes: {self.num_classes}')
+        print(f'channels: {self.num_channels}, image size: {self.image_size}, classes: {self.num_classes}, augmentation: {self.augment}')
 
-        train_ds = TensorDataset(train_x, train_y)
         if self.augment:
-            train_ds = AugmentedDataset(train_ds, self.augment_transform or self._default_transform())
+            transform = self.augment_transform or self._default_transform()
+            train_ds = AugmentedDataset(train_x, train_y, transform=transform)
+        else:
+            train_ds = TensorDataset(train_x, train_y)
         return train_ds, TensorDataset(test_x, test_y)
