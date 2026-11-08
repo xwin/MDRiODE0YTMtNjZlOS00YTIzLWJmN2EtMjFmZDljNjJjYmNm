@@ -1,5 +1,8 @@
 from local_code.stage_3_code.Dataset_Loader_Pickle import Dataset_Loader_Pickle
-from local_code.stage_3_code.Method_CNN_ORL import Method_CNN_ORL
+from local_code.stage_3_code.Method_CNN_ORL import (
+    Method_CNN_ORL,
+    Method_CNN_ORL_NoBatchNorm
+)
 from local_code.stage_3_code.Result_Saver import Result_Saver
 from local_code.stage_3_code.History_Saver import History_Saver
 from local_code.stage_3_code.Setting_Train_Test_PreSplit import Setting_Train_Test_PreSplit
@@ -16,7 +19,7 @@ import torch
 #---- ORL model training and evaluation script ----
 if 1:
 
-    # study can be None, single_layer, dual_layer, no_activation
+    # study can be None, no_dropout, no_batchnorm
     study = None
     # possible names: accuracy, precision, recall, f1, all
     evaluator_type = 'all'
@@ -54,7 +57,13 @@ if 1:
     history_obj.history_destination_file_name = 'train_history_orl.csv'
 
 
-    method_obj = Method_CNN_ORL('CNN', 'orl model')
+    if study == "no_dropout":
+        method_obj = Method_CNN_ORL('CNN No dropout', 'orl model no dropout')
+        method_obj.dropout_probability = 0.0
+    elif study == "no_batchnorm":
+        method_obj = Method_CNN_ORL_NoBatchNorm('CNN No batchnorm', 'orl model no batchnorm')
+    else:
+        method_obj = Method_CNN_ORL('CNN', 'orl model')
 
     method_obj.history = history_obj
     method_obj.optimizer_name = optimizer_type
