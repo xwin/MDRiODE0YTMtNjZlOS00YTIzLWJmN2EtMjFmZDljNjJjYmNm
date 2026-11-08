@@ -10,7 +10,7 @@ class Method_CNN_ORL(Method_CNN_Base):
     max_epoch = 70
     batch_size = 32
     learning_rate = 5e-4
-    dropout_probability = 0.5
+    use_dropout = True
 
     def __init__(self, mName, mDescription):
         super().__init__(mName, mDescription)
@@ -30,7 +30,7 @@ class Method_CNN_ORL(Method_CNN_Base):
 
         self.activation_func = nn.ReLU()
         self.pool = nn.MaxPool2d(2)
-        self.dropout = nn.Dropout(self.dropout_probability)
+        self.dropout = nn.Dropout(0.5)
 
         # 64*7*5 = 2240 -> 128 -> 40
         self.fc_layer_1 = nn.Linear(64 * 7 * 5, 128)
@@ -44,14 +44,17 @@ class Method_CNN_ORL(Method_CNN_Base):
         h = self.pool(self.activation_func(self.bn_3(self.conv_3(h))))
         h = self.pool(self.activation_func(self.bn_4(self.conv_4(h))))
         h = h.flatten(start_dim=1)
-        h = self.dropout(self.activation_func(self.fc_layer_1(h)))
+        if self.use_dropout:
+            h = self.dropout(self.activation_func(self.fc_layer_1(h)))
+        else:
+            h = self.activation_func(self.fc_layer_1(h))
         return self.fc_layer_2(h)
 
 class Method_CNN_ORL_NoBatchNorm(Method_CNN_Base):
     max_epoch = 70
     batch_size = 32
     learning_rate = 5e-4
-    dropout_probability = 0.5
+    use_dropout = True
 
     def __init__(self, mName, mDescription):
         super().__init__(mName, mDescription)
@@ -67,7 +70,7 @@ class Method_CNN_ORL_NoBatchNorm(Method_CNN_Base):
 
         self.activation_func = nn.ReLU()
         self.pool = nn.MaxPool2d(2)
-        self.dropout = nn.Dropout(self.dropout_probability)
+        self.dropout = nn.Dropout(0.5)
 
         # 64*7*5 = 2240 -> 128 -> 40
         self.fc_layer_1 = nn.Linear(64 * 7 * 5, 128)
@@ -81,5 +84,8 @@ class Method_CNN_ORL_NoBatchNorm(Method_CNN_Base):
         h = self.pool(self.activation_func(self.conv_3(h)))
         h = self.pool(self.activation_func(self.conv_4(h)))
         h = h.flatten(start_dim=1)
-        h = self.dropout(self.activation_func(self.fc_layer_1(h)))
+        if self.use_dropout:
+            h = self.dropout(self.activation_func(self.fc_layer_1(h)))
+        else:
+            h = self.activation_func(self.fc_layer_1(h))
         return self.fc_layer_2(h)

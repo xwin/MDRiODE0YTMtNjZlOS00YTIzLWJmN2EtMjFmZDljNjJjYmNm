@@ -15,9 +15,17 @@ from local_code.stage_3_code.Evaluate_Accuracy import (
 )
 import numpy as np
 import torch
+import sys
+import os
+from pathlib import Path
+
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT))
+DATA_DIR = os.path.join(PROJECT_ROOT, 'data', 'stage_3_data')
+RESULT_DIR = os.path.join(PROJECT_ROOT, 'result', 'stage_3_result')
 
 #---- ORL model training and evaluation script ----
-if 1:
+if __name__ == "__main__":
 
     # study can be None, no_dropout, no_batchnorm
     study = None
@@ -34,15 +42,13 @@ if 1:
 
     # ---- objection initialization setction ---------------
     orl_dataset_obj = Dataset_Loader_Pickle('orl', 'ORL Dataset')
-    orl_dataset_obj.dataset_source_folder_path = '../../data/stage_3_data/'
+    orl_dataset_obj.dataset_source_folder_path = DATA_DIR
     orl_dataset_obj.dataset_source_file_name = 'ORL'
     orl_dataset_obj.channel_index = 0 # R channel
     orl_dataset_obj.label_offset = 1 # 
     orl_dataset_obj.augment = False
 
-   
-
-    if False:
+    if False: # check correctness of dataset loading
         train_ds, test_ds = orl_dataset_obj.load()
         x, y = train_ds.tensors
         print(len(train_ds), len(test_ds))             # 360 40
@@ -53,17 +59,26 @@ if 1:
         exit(0)
 
     history_obj = History_Saver('training history', '')
-    history_obj.history_destination_folder_path = '../../result/stage_3_result/'
+    history_obj.history_destination_folder_path = RESULT_DIR
     history_obj.history_destination_file_name = 'train_history_orl.csv'
 
 
-    if study == "no_dropout":
+    if study == 'no_dropout':
         method_obj = Method_CNN_ORL('CNN No dropout', 'orl model no dropout')
-        method_obj.dropout_probability = 0.0
-    elif study == "no_batchnorm":
+        method_obj.use_dropout = False
+        RESULT_DIR = os.path.join(PROJECT_ROOT, 'result', 'stage_3_result')
+        history_obj.history_destination_folder_path = RESULT_DIR
+        history_obj.history_destination_file_name = 'train_history_orl_nodropout.csv'
+        result_suffix = '_nodropout'
+    elif study == 'no_batchnorm':
         method_obj = Method_CNN_ORL_NoBatchNorm('CNN No batchnorm', 'orl model no batchnorm')
+        RESULT_DIR = os.path.join(PROJECT_ROOT, 'result', 'stage_3_result')
+        history_obj.history_destination_folder_path = RESULT_DIR
+        history_obj.history_destination_file_name = 'train_history_orl_nobatchnorm.csv'
+        result_suffix = '_nobatchnorm'
     else:
         method_obj = Method_CNN_ORL('CNN', 'orl model')
+        result_suffix = ''
 
     method_obj.history = history_obj
     method_obj.optimizer_name = optimizer_type
@@ -74,8 +89,8 @@ if 1:
     method_obj.max_epoch = 40
 
     result_obj = Result_Saver('saver', '')
-    result_obj.result_destination_folder_path = '../../result/stage_3_result/ORL_'
-    result_obj.result_destination_file_name = 'prediction_result'
+    result_obj.result_destination_folder_path = os.path.join(RESULT_DIR, 'CNN_ORL_')
+    result_obj.result_destination_file_name = 'prediction_result' + result_suffix
     result_obj.fold_count = "1"
     setting_obj = Setting_Train_Test_PreSplit('train test pre split', '')
 
