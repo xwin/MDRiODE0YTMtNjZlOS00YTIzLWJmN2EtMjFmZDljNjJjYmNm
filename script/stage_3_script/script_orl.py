@@ -35,7 +35,7 @@ if 1:
     orl_dataset_obj.dataset_source_file_name = 'ORL'
     orl_dataset_obj.channel_index = 0 # R channel
     orl_dataset_obj.label_offset = 1 # 
-    orl_dataset_obj.augment = True
+    orl_dataset_obj.augment = False
 
    
 
@@ -62,6 +62,7 @@ if 1:
     if method_obj.optimizer_name == 'SGD':
         method_obj.learning_rate = 1e-2
     #method_obj.max_epoch = 1
+    method_obj.max_epoch = 40
 
     result_obj = Result_Saver('saver', '')
     result_obj.result_destination_folder_path = '../../result/stage_3_result/ORL_'

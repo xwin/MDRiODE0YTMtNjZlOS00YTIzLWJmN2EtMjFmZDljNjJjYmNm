@@ -79,7 +79,7 @@ if 1:
 
     print(f"selecting {method_obj.loss_name} loss function")
     # for syntax check
-    method_obj.max_epoch = 1
+    # method_obj.max_epoch = 1
 
     result_obj = Result_Saver('saver', '')
     result_obj.result_destination_folder_path = '../../result/stage_3_result/CIFAR_'

@@ -88,7 +88,7 @@ class Dataset_Loader_Pickle(dataset):
         # per-channel statistics from the training set only
         mean = train_x.mean(dim=(0, 2, 3), keepdim=True)
         std = train_x.std(dim=(0, 2, 3), keepdim=True)
-        train_x = (train_x - mean) / std
+        # delay applying normalization for train_x because it will be done in the transform
         test_x = (test_x - mean) / std
 
         self.num_channels = train_x.shape[1]
@@ -98,7 +98,12 @@ class Dataset_Loader_Pickle(dataset):
 
         if self.augment:
             transform = self.augment_transform or self._default_transform()
+            transform = v2.Compose([
+                    transform,
+                    v2.Normalize(mean=mean.flatten().tolist(), std=std.flatten().tolist())
+                ])
             train_ds = AugmentedDataset(train_x, train_y, transform=transform)
         else:
+            train_x = (train_x - mean) / std
             train_ds = TensorDataset(train_x, train_y)
         return train_ds, TensorDataset(test_x, test_y)
