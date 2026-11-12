@@ -12,7 +12,6 @@ MIN_WORDS = 3            # need at least 3 word tokens to form a prompt
 
 # Entries that are not jokes (judged from a 160-character preview).
 DROP_IDS = {
-    317,   # commentary about a tumblr post
     391,   # link to an AskReddit thread
     522,   # "found this video" + link
     607,   # subreddit milestone announcement
@@ -32,6 +31,7 @@ DROP_IDS = {
     1453,
     1465,
     1619,  # tricky to cleanup
+    1310,  # strikethrough list gag, relies on formatting
 }
 
 # ---------------------------------------------------------------------------
@@ -65,6 +65,7 @@ ID_FIXES = {
     193:  ("suffix", " ~Skip"),
     232:  ("suffix", "From /r/PeterL"),
     247:  ("prefix", "Mommy! I found a $10 bill"),
+    317:  ("suffix", "&gt; (This exchange"),
     342:  ("suffix", " ~Skip"),
     388:  ("suffix", " Aonther one"),         # "bambooboo . aonther one from my 9 year old ."
     423:  ("suffix", " *From my 9"),          # "u - turns ! from my 9 year old son yesterday . fixed typo ."
@@ -73,13 +74,16 @@ ID_FIXES = {
     491:  ("suffix", " [Credit to Milton"),
     492:  ("suffix", " My favorite jok"),
     523:  ("suffix", " (as told by one"),
+    531:  ("prefix","\"Hey! The dog you"),
     568:  ("suffix", "VCN"),
     575:  ("suffix", " (As told by my 8yo"),          # "pea soup . ( as told by..."
     586:  ("suffix", " (Seriously"),
     587:  ("suffix", " I'm on a roll"),
     590:  ("suffix", " I woke up with"),
     593:  ("prefix", "Two iPhones walk"),
+    647:  ("suffix", "(As in board)"),
     654:  ("suffix", "welcome to"),
+    744:  ("suffix", " c:"),
     753:  ("suffix", "*Come on guys,"),
     778:  ("suffix", " Another one from"),         # "launch ! another one from my 9 year old ."
     785:  ("suffix", "**Tim Vine**"),                    # "...i'm not stopping you . \" tim vine"
@@ -96,10 +100,12 @@ ID_FIXES = {
     991:  ("suffix", " Edit: a wor"),                      # "cash or czech edit : a word"
     929:  ("suffix", " I woke up with"),
     982:  ("suffix", " *knee slap*"),
+    1075: ("prefix", "Why do galaxies"),
     1084: ("suffix", "&lt;p&gt; My"),
     1183: ("suffix", " ~Skip"),
     1235: ("suffix", ". Joke by Tim"),            # "velcro what a rip off . joke by tim vine ."
     1255: ("suffix", " ~Skip"),
+    1347: ("prefix", "What holds up a"),
     1353: ("suffix", " ~Skip"),
     1362: ("suffix"," ~ Stewart Francis"),
     1369: ("suffix", " Another one from"),         # "starburst ! another one from my 9 year old ."
@@ -109,6 +115,9 @@ ID_FIXES = {
     1452: ("suffix"," --My amazing"),
     1541: ("prefix","How do you find"),
     1569: ("suffix", " P.S. kids"),                  # "bless you . . p . s . kids love it"
+    1584: ("suffix", " My little sister"),
+    1585: ("prefix", "Where do"),
+    1587: ("suffix", " (I made thi"),
     1618: ("suffix"," (I was told this"),
 }
 
@@ -136,11 +145,13 @@ tokenizer = RegexpTokenizer(TOKEN_PATTERN)
 def clean(joke_id: int, text: str) -> list:
     text = strip_attribution(joke_id, text)                             # per-ID attribution fix
     text = html.unescape(text)                                          # &amp; &gt; ...
+    text = re.sub(r"\[\s*oc\s*\]", " ", text, flags=re.I)               # [OC] tag
     text = re.sub(r"\[([^\]]*)\]\(https?://[^)\s]*\)", r"\1", text)     # [text](url) -> text
     text = re.sub(r"\b(?:source|from|via|credit)\s*:\s*https?://\S+", " ", text, flags=re.I)
     text = re.sub(r"https?://\S+", " ", text)                           # bare URLs
     text = re.sub(r"\(x-?post[^)]*\)", " ", text, flags=re.I)           # (x-post from /r/...)
     text = text.replace("*", "")                                        # markdown emphasis
+    text = text.replace("*", "").replace('"', "").replace("~", "")
     text = re.sub(r"\s+", " ", text).strip().lower()
     return tokenizer.tokenize(text)
 
