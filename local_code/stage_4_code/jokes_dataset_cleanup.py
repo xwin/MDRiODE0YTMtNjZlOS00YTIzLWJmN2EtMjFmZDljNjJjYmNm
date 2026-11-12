@@ -5,7 +5,8 @@ from pathlib import Path
 import pandas as pd
 from nltk.tokenize import RegexpTokenizer
 
-DATA_DIR = Path("../../data/stage_4_data/text_generation")
+DATA_DIR = Path(__file__).resolve().parents[2] / "data" / "stage_4_data" / "text_generation"
+
 IN_FILE = DATA_DIR / "data"
 OUT_FILE = DATA_DIR / "jokes_clean.csv"
 MIN_WORDS = 3            # need at least 3 word tokens to form a prompt
@@ -30,7 +31,6 @@ DROP_IDS = {
     599,
     1453,
     1465,
-    1619,  # tricky to cleanup
     1310,  # strikethrough list gag, relies on formatting
 }
 
@@ -62,10 +62,12 @@ ID_FIXES = {
     157:  ("suffix", "Oh my-oh-my!"),
     170:  ("suffix", "(Also: can anyone"),
     180:  ("prefix", '"My sink was'),
+    191:  ("prefix", "What did one"),
     193:  ("suffix", " ~Skip"),
     232:  ("suffix", "From /r/PeterL"),
     247:  ("prefix", "Mommy! I found a $10 bill"),
     317:  ("suffix", "&gt; (This exchange"),
+    318:  ("suffix", " (Credit goes"),
     342:  ("suffix", " ~Skip"),
     388:  ("suffix", " Aonther one"),         # "bambooboo . aonther one from my 9 year old ."
     423:  ("suffix", " *From my 9"),          # "u - turns ! from my 9 year old son yesterday . fixed typo ."
@@ -73,6 +75,7 @@ ID_FIXES = {
     473:  ("suffix", " ~Skip"),
     491:  ("suffix", " [Credit to Milton"),
     492:  ("suffix", " My favorite jok"),
+    506:  ("prefix", "Why did the"),
     523:  ("suffix", " (as told by one"),
     531:  ("prefix","\"Hey! The dog you"),
     568:  ("suffix", "VCN"),
@@ -81,6 +84,7 @@ ID_FIXES = {
     587:  ("suffix", " I'm on a roll"),
     590:  ("suffix", " I woke up with"),
     593:  ("prefix", "Two iPhones walk"),
+    642:  ("prefix", "How much does"),
     647:  ("suffix", "(As in board)"),
     654:  ("suffix", "welcome to"),
     744:  ("suffix", " c:"),
@@ -96,6 +100,8 @@ ID_FIXES = {
     867:  ("suffix", " (Not sure of the"),
     870:  ("suffix", " [X Post from r/"),
     871:  ("suffix", " ^imagine ^this"),
+    892:  ("prefix", "why is it impossible"),
+    893:  ("suffix", " #foreveralone"),
     896:  ("suffix", " ~Skip"),
     991:  ("suffix", " Edit: a wor"),                      # "cash or czech edit : a word"
     929:  ("suffix", " I woke up with"),
@@ -103,6 +109,7 @@ ID_FIXES = {
     1075: ("prefix", "Why do galaxies"),
     1084: ("suffix", "&lt;p&gt; My"),
     1183: ("suffix", " ~Skip"),
+    1228: ("prefix", "My son took"),
     1235: ("suffix", ". Joke by Tim"),            # "velcro what a rip off . joke by tim vine ."
     1255: ("suffix", " ~Skip"),
     1347: ("prefix", "What holds up a"),
@@ -150,9 +157,18 @@ def clean(joke_id: int, text: str) -> list:
     text = re.sub(r"\b(?:source|from|via|credit)\s*:\s*https?://\S+", " ", text, flags=re.I)
     text = re.sub(r"https?://\S+", " ", text)                           # bare URLs
     text = re.sub(r"\(x-?post[^)]*\)", " ", text, flags=re.I)           # (x-post from /r/...)
-    text = text.replace("*", "")                                        # markdown emphasis
+    text = re.sub(r"\[x-?post[^\]]*\]", " ", text, flags=re.I)          # [x-post from /r/...]
     text = text.replace("*", "").replace('"', "").replace("~", "")
+    # collapse repeated punctuation marks (e.g. '!!', '! !', '??', '... ...', ', ,')
+    text = re.sub(r"(\.\s*){3,}", "... ", text)
+    text = re.sub(r"(\.{3}\s*)+", "... ", text)
+    text = re.sub(r"(?<!\.)\.\.(?!\.)", ".", text)
+    text = re.sub(r"(!\s*){2,}", "! ", text)
+    text = re.sub(r"(\?\s*){2,}", "? ", text)
+    text = re.sub(r"(,\s*){2,}", ", ", text)
+    text = re.sub(r"(-\s*){2,}", "- ", text)
     text = re.sub(r"\s+", " ", text).strip().lower()
+    text = re.sub(r":-?\)", " ", text)
     return tokenizer.tokenize(text)
 
 
